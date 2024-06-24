@@ -1,18 +1,18 @@
 import 'dotenv/config'
 import express from 'express'
-import mysql from 'mysql2/promise'
 import cors from 'cors'
 const app = express()
 const port = process.env.PORT || 5000
-import { signUpUser , loginUser ,getUserDetails, authmiddleware } from './controllers/userControllers.js'
-import { userBlogs,indBlog } from './controllers/dashboardControllers.js'
-import { createNewBlog ,getAllBlogs , getWritersBlogs } from './controllers/blogsController.js'
-import { allTags,addOneTag } from './controllers/tagControllers.js'
-import { getFollowerAndFollowingCount, getIsFollowing ,follow,unfollow} from './controllers/userControllers.js'
-import { BlogsNoTags,BlogsWithTags,BlogsWithTagsAndFollowers,BlogsNoTagsWithFollows } from './controllers/searchBlogsControllers.js'
-import { NewBlog } from './controllers/newBlogController.js'
-import { checkVote,upvote,downvote,getVotes,undownvote,unupvote } from './controllers/votescontroller.js'
-import { DeleteBlog } from './controllers/deleteController.js'
+
+// Routes
+import userRoutes from './routes/userRoutes'
+import dashboardRoutes from './routes/dashboardRoutes'
+import tagRoutes from './routes/tagRoutes'
+import blogRoutes from './routes/blogRoutes'
+import writerRoutes from './routes/writerRoutes'
+import searchRoutes from './routes/searchRoutes'
+import votesRoutes from './routes/votesRoutes'
+
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
@@ -25,109 +25,15 @@ app.use(cors(
         credentials: true
     }
 ));
-const connection = await mysql.createConnection({
-    uri: process.env.MYSQL_URI,
-    ssl:{
-        ca: process.env.MYSQL_SSL_CERT,
-        rejectUnauthorized: false // Accept self-signed certificates
-    }
-})
 
-/************** USER ROUTES *****************/ 
-app.post('/users/signup', async (req, res) => {
-    await signUpUser(connection, req, res)
-})
-app.post('/users/login', async (req, res) => {
-    await loginUser(connection, req, res)
-})
-app.get('/users/authmiddleware', authmiddleware, (req, res) => {
-    res.status(200).json({message : 'Authorized'})
-})
-app.get('/users/details', async (req, res) => {
-    await getUserDetails(connection,req,res)
-})
-app.get('/users/socialstats', async (req,res) => {
-    await getFollowerAndFollowingCount(connection , req , res)
-})
-app.get('/users/isfollowing', async (req,res) => {
-    await getIsFollowing(connection,req,res);
-})
-app.post('/users/follow', async (req,res) => {
-    await follow(connection,req,res)
-})
-app.post('/users/unfollow', async (req,res) => {
-    await unfollow(connection,req,res)
-})
-/************** Dashboard *****************/
-app.post('/dashboard', async (req,res)=>{
-    await userBlogs(connection,req,res)
-})
-app.post('/dashboard/blog', async (req,res)=>{
-    await indBlog(connection,req,res)
-})
-/**************** Writers  *********************/
-app.get('/writers/blogs', async (req,res)=>{
-    await getWritersBlogs(connection,req,res)
-})
-
-/************** tags *********************/
-app.post('/alltags', async (req,res)=>{
-    await allTags(connection,req,res)
-})
-app.post('/addtag', async (req,res)=>{
-    await addOneTag(connection,req,res)
-})
-
-/********************* Blogs **********************/
-app.post('/blog/newblog', async (req, res) => {
-    await createNewBlog(connection, req, res)
-})
-app.get('/blog/allblogs', async (req, res) => {
-    await getAllBlogs(connection, req, res)
-})
+app.use('/users',userRoutes)
+app.use('/dashboard',dashboardRoutes)
+app.use('/',tagRoutes)
+app.use('/blog',blogRoutes)
+app.use('/writers',writerRoutes)
+app.use('/',searchRoutes)
+app.use('/votes',votesRoutes)
 
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`)
-})
-
-/****************Search*******************/
-app.post('/noTags', async (req,res)=>{
-    await BlogsNoTags(connection,req,res)
-})
-app.post('/withTags', async (req,res)=>{
-    await BlogsWithTags(connection,req,res)
-})
-
-app.post('/NewBlog', async (req,res)=>{
-    await NewBlog(connection,req,res)
-})
-
-app.post('/DeleteBlog', async (req,res)=>{
-    await DeleteBlog(connection,req,res)
-})
-app.post('/withTagsAndFollows', async (req,res)=>{
-    await BlogsWithTagsAndFollowers(connection,req,res)
-})
-app.post('/noTagsWithFollows', async (req,res)=>{
-    await BlogsNoTagsWithFollows(connection,req,res)
-})
-
-/********************* VOTES ************************/ 
-app.get('/votes/checkvote', async (req,res)=>{
-    await checkVote(connection,req,res)
-})
-app.post('/votes/upvote', async (req,res)=>{
-    await upvote(connection,req,res)
-})
-app.post('/votes/downvote', async (req,res)=>{
-    await downvote(connection,req,res)
-})
-app.get('/votes/votecount', async (req,res)=>{
-    await getVotes(connection,req,res)
-})
-app.post('/votes/unupvote', async (req,res)=>{
-    await unupvote(connection,req,res)
-})
-app.post('/votes/undownvote', async (req,res)=>{
-    await undownvote(connection,req,res)
 })
